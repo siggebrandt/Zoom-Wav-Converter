@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zoom WAV Converter</title>
+<meta name="description" content="Split and decode Mid/Side WAV recordings from Zoom handy recorders, right in your browser.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta property="og:title" content="Zoom WAV Converter">
+<meta property="og:description" content="Split and decode Mid/Side WAV recordings in your browser. Nothing is uploaded.">
+<meta property="og:image" content="icon-512.png">
+<meta name="theme-color" content="#E4022D">
+<style>
+:root{
+  --mau-red:#E4022D;--mau-red-dark:#B5001F;--deep-blue:#1E4589;--steel:#B1C1DF;--mint:#E1F1EF;--aqua:#98D1C9;--berry:#A9115F;--mandarin:#EF7748;
+  --bg:#F7F7F8;--card:#FFFFFF;--ink:#1A1A1A;--muted:#5B5F69;--line:#DCDFE5;--soft:var(--mint);
+  --accent:var(--mau-red);--accent-ink:#FFFFFF;--link:var(--deep-blue);--warn:var(--berry);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14161C;--card:#1E2129;--ink:#F2F2F4;--muted:#A3A8B4;--line:#343845;--soft:#1B2A2C;--link:var(--steel);--warn:var(--mandarin);}}
+:root[data-theme=dark]{--bg:#14161C;--card:#1E2129;--ink:#F2F2F4;--muted:#A3A8B4;--line:#343845;--soft:#1B2A2C;--link:var(--steel);--warn:var(--mandarin);}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+a{color:var(--link)}
+.topbar{height:6px;background:var(--mau-red)}
+main{max-width:880px;margin:0 auto;padding:28px 16px 64px}
+header.brand{display:flex;gap:14px;align-items:center;margin-bottom:6px}
+header.brand img{width:48px;height:48px;flex:none}
+h1{font-size:1.7rem;margin:0;letter-spacing:-.01em;line-height:1.2}
+h2{font-size:1.05rem;margin:0 0 4px;word-break:break-all}
+.sub{color:var(--muted);margin:6px 0 24px}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:36px 16px;text-align:center;background:var(--soft);cursor:pointer;transition:border-color .15s;display:block}
+.drop:hover,.drop.over{border-color:var(--mau-red)}
+.drop strong{display:block;font-size:1.05rem;margin-bottom:4px}
+.drop span{color:var(--muted);font-size:.9rem}
+.card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--mau-red);border-radius:10px;padding:16px;margin-top:16px}
+.row{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-top:10px}
+.meta{color:var(--muted);font-size:.88rem}
+label{font-size:.9rem;display:inline-flex;gap:6px;align-items:center}
+input[type=range],input[type=checkbox]{accent-color:var(--mau-red)}
+select{font:inherit;font-size:.9rem;padding:4px 6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+button{font:inherit;font-size:.9rem;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--mau-red)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+button.primary{background:var(--mau-red);color:#fff;border-color:var(--mau-red);font-weight:600}
+button.primary:hover{background:var(--mau-red-dark);border-color:var(--mau-red-dark)}
+.outs{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin-top:14px}
+.outs button{text-align:left;padding:8px 12px}
+.outs small{display:block;color:var(--muted);font-size:.8rem}
+.note{font-size:.85rem;color:var(--muted);margin-top:8px;min-height:1.2em}
+.note.warn{color:var(--warn)}
+.width-val{font-variant-numeric:tabular-nums;min-width:3.5em;display:inline-block}
+details{margin-top:28px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+summary{cursor:pointer;font-weight:600}
+.eq{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--soft);padding:8px 12px;border-radius:8px;display:block;margin:8px 0;white-space:pre}
+footer{color:var(--muted);font-size:.85rem;margin-top:28px;border-top:1px solid var(--line);padding-top:14px}
+</style>
+</head>
+<body>
+<div class="topbar"></div>
+<main>
+  <header class="brand"><img src="logo.svg" alt=""><h1>Zoom WAV Converter</h1></header>
+  <p class="sub">Split and decode Mid/Side recordings (e.g. Zoom 4-channel mode). Everything runs in your browser — files are never uploaded.</p>
+
+  <label class="drop" id="drop">
+    <strong>Drop WAV files here, or click to choose</strong>
+    <span>Typical Zoom 4CH output: one <code>…MS.WAV</code> and one <code>…XY.WAV</code> per take</span>
+    <input type="file" id="file" accept=".wav,audio/wav,audio/x-wav" multiple hidden>
+  </label>
+
+  <div id="list"></div>
+
+  <details>
+    <summary>How Mid/Side works</summary>
+    <p>The Mid capsule points forward. The Side capsule is a figure-8: its left lobe gives positive polarity, its right lobe negative polarity — but both arrive in <em>one</em> signal. So S cannot be separated into two independent recordings; its "left" and "right" halves are the same signal with opposite polarity:</p>
+    <span class="eq">S_left  = +S
+S_right = −S</span>
+    <p>Combining with M gives normal stereo. The width control scales S:</p>
+    <span class="eq">L = M + width·S
+R = M − width·S</span>
+    <p>Going the other way, any L/R stereo file can be turned back into M/S:</p>
+    <span class="eq">M = (L + R) / 2
+S = (L − R) / 2</span>
+    <p><strong>Modes:</strong> <em>MS raw</em> expects M on channel 1 and S on channel 2 (Zoom's "MS-RAW"). <em>Stereo L/R → M/S</em> is for files that were already decoded to stereo. <em>Split channels</em> just writes each channel as its own mono file (use it for the XY file). If the stereo image sounds mirrored compared with the XY file, tick <em>Invert S</em>.</p>
+  </details>
+
+  <footer>v0.0.1 alpha · <a href="https://github.com/__OWNER__/Zoom-Wav-Converter">Source &amp; instructions on GitHub</a><br>Reads 8/16/24/32-bit PCM and 32/64-bit float WAV, including WAVE_FORMAT_EXTENSIBLE, BWF and RF64. Very long files (over ~1 GB) may exceed browser memory.</footer>
+</main>
+
+<script id="core">
+const Core = (() => {
+  function parseWav(buf) {
+    const dv = new DataView(buf), u8 = new Uint8Array(buf);
+    const tag = o => String.fromCharCode(u8[o], u8[o + 1], u8[o + 2], u8[o + 3]);
+    const riff = tag(0);
+    if (!['RIFF', 'RF64', 'BW64'].includes(riff) || tag(8) !== 'WAVE') throw new Error('Not a WAV file');
+    let off = 12, fmt = null, dataOff = -1, dataLen = 0, ds64 = null;
+    while (off + 8 <= buf.byteLength) {
+      const id = tag(off), body = off + 8;
+      let size = dv.getUint32(off + 4, true);
+      if (id === 'ds64') {
+        ds64 = dv.getUint32(body + 8, true) + dv.getUint32(body + 12, true) * 4294967296;
+      } else if (id === 'fmt ') {
+        let format = dv.getUint16(body, true);
+        if (format === 0xFFFE && size >= 26) format = dv.getUint16(body + 24, true);
+        fmt = {
+          format,
+          channels: dv.getUint16(body + 2, true),
+          sampleRate: dv.getUint32(body + 4, true),
+          blockAlign: dv.getUint16(body + 12, true),
+          bits: dv.getUint16(body + 14, true)
+        };
+      } else if (id === 'data') {
+        dataOff = body;
+        dataLen = (size === 0xFFFFFFFF && ds64 !== null) ? ds64 : size;
+        dataLen = Math.min(dataLen, buf.byteLength - body);
+        size = dataLen;
+      }
+      off = body + size + (size & 1);
+    }
+    if (!fmt) throw new Error('Missing fmt chunk');
+    if (dataOff < 0) throw new Error('Missing data chunk');
+    const { format, channels: nc, bits } = fmt;
+    const okPcm = format === 1 && [8, 16, 24, 32].includes(bits);
+    const okFloat = format === 3 && (bits === 32 || bits === 64);
+    if (!okPcm && !okFloat) throw new Error(`Unsupported WAV encoding (format ${format}, ${bits} bit)`);
+    const bps = bits / 8, ba = fmt.blockAlign || nc * bps;
+    const n = Math.floor(dataLen / ba);
+    const data = [];
+    for (let c = 0; c < nc; c++) {
+      const o = new Float32Array(n);
+      let p = dataOff + c * bps;
+      if (okFloat && bits === 32) for (let i = 0; i < n; i++, p += ba) o[i] = dv.getFloat32(p, true);
+      else if (okFloat) for (let i = 0; i < n; i++, p += ba) o[i] = dv.getFloat64(p, true);
+      else if (bits === 16) for (let i = 0; i < n; i++, p += ba) o[i] = dv.getInt16(p, true) / 32768;
+      else if (bits === 24) for (let i = 0; i < n; i++, p += ba) {
+        let v = u8[p] | (u8[p + 1] << 8) | (u8[p + 2] << 16);
+        if (v & 0x800000) v |= ~0xFFFFFF;
+        o[i] = v / 8388608;
+      }
+      else if (bits === 32) for (let i = 0; i < n; i++, p += ba) o[i] = dv.getInt32(p, true) / 2147483648;
+      else for (let i = 0; i < n; i++, p += ba) o[i] = (u8[p] - 128) / 128;
+      data.push(o);
+    }
+    return { ...fmt, length: n, data };
+  }
+
+  // bits: 16, 24 (PCM) or 32 (float). Returns an ArrayBuffer.
+  function encodeWav(chs, sampleRate, bits) {
+    const nc = chs.length, n = chs[0].length, isFloat = bits === 32;
+    const bps = bits / 8, ba = nc * bps, dataLen = n * ba;
+    const buf = new ArrayBuffer(44 + dataLen), dv = new DataView(buf), u8 = new Uint8Array(buf);
+    const str = (o, s) => { for (let i = 0; i < 4; i++) u8[o + i] = s.charCodeAt(i); };
+    str(0, 'RIFF'); dv.setUint32(4, 36 + dataLen, true); str(8, 'WAVE');
+    str(12, 'fmt '); dv.setUint32(16, 16, true);
+    dv.setUint16(20, isFloat ? 3 : 1, true); dv.setUint16(22, nc, true);
+    dv.setUint32(24, sampleRate, true); dv.setUint32(28, sampleRate * ba, true);
+    dv.setUint16(32, ba, true); dv.setUint16(34, bits, true);
+    str(36, 'data'); dv.setUint32(40, dataLen, true);
+    let p = 44;
+    for (let i = 0; i < n; i++) {
+      for (let c = 0; c < nc; c++, p += bps) {
+        const s = chs[c][i];
+        if (isFloat) { dv.setFloat32(p, s, true); continue; }
+        if (bits === 16) {
+          let v = Math.round(s * 32768); v = v > 32767 ? 32767 : v < -32768 ? -32768 : v;
+          dv.setInt16(p, v, true);
+        } else {
+          let v = Math.round(s * 8388608); v = v > 8388607 ? 8388607 : v < -8388608 ? -8388608 : v;
+          u8[p] = v & 255; u8[p + 1] = (v >> 8) & 255; u8[p + 2] = (v >> 16) & 255;
+        }
+      }
+    }
+    return buf;
+  }
+
+  const negate = a => { const o = new Float32Array(a.length); for (let i = 0; i < a.length; i++) o[i] = -a[i]; return o; };
+
+  function msFromLR(L, R) {
+    const n = L.length, M = new Float32Array(n), S = new Float32Array(n);
+    for (let i = 0; i < n; i++) { M[i] = (L[i] + R[i]) * 0.5; S[i] = (L[i] - R[i]) * 0.5; }
+    return { M, S };
+  }
+
+  function decode(M, S, width) {
+    const n = M.length, L = new Float32Array(n), R = new Float32Array(n);
+    for (let i = 0; i < n; i++) { const s = width * S[i]; L[i] = M[i] + s; R[i] = M[i] - s; }
+    return { L, R };
+  }
+
+  function peak(...arrs) {
+    let p = 0;
+    for (const a of arrs) for (let i = 0; i < a.length; i++) { const v = Math.abs(a[i]); if (v > p) p = v; }
+    return p;
+  }
+
+  function scaleInPlace(a, g) { for (let i = 0; i < a.length; i++) a[i] *= g; return a; }
+
+  return { parseWav, encodeWav, negate, msFromLR, decode, peak, scaleInPlace };
+})();
+</script>
+
+<script>
+(() => {
+  const $ = (s, el = document) => el.querySelector(s);
+  const list = $('#list'), drop = $('#drop'), input = $('#file');
+  let ctx = null, player = null;
+
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); handle(e.dataTransfer.files); });
+  input.addEventListener('change', () => { handle(input.files); input.value = ''; });
+
+  async function handle(files) {
+    for (const f of files) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `<h2></h2><div class="meta">Reading…</div>`;
+      $('h2', card).textContent = f.name;
+      list.prepend(card);
+      try {
+        const wav = Core.parseWav(await f.arrayBuffer());
+        build(card, f.name, wav);
+      } catch (err) {
+        $('.meta', card).textContent = 'Could not read this file: ' + err.message;
+        $('.meta', card).classList.add('note', 'warn');
+      }
+    }
+  }
+
+  function guessMode(name, nc) {
+    if (nc !== 2) return 'split';
+    const stem = name.replace(/\.[^.]+$/, '');
+    if (/ms$/i.test(stem) || /[_\- ]ms\b/i.test(stem)) return 'ms';
+    if (/xy$/i.test(stem)) return 'split';
+    return 'ms';
+  }
+
+  function build(card, name, wav) {
+    const base = name.replace(/\.[^.]+$/, '');
+    const dur = wav.length / wav.sampleRate;
+    const enc = wav.format === 3 ? `${wav.bits}-bit float` : `${wav.bits}-bit`;
+    const st = { mode: guessMode(name, wav.channels), invert: false, width: 1, protect: true, cache: {} };
+    const srcBits = wav.format === 3 ? 32 : (wav.bits === 32 ? 32 : wav.bits === 8 ? 16 : wav.bits);
+
+    card.innerHTML = `
+      <h2></h2>
+      <div class="meta">${wav.channels} ch · ${(wav.sampleRate / 1000).toFixed(1)} kHz · ${enc} · ${fmtTime(dur)}</div>
+      <div class="row">
+        <label>Mode
+          <select data-k="mode">
+            <option value="ms">MS raw (ch1 = M, ch2 = S)</option>
+            <option value="lr">Stereo L/R → M/S</option>
+            <option value="split">Split channels only</option>
+          </select>
+        </label>
+        <label class="ms-only"><input type="checkbox" data-k="invert"> Invert S</label>
+        <label class="ms-only">Width <input type="range" min="0" max="200" value="100" data-k="width"> <span class="width-val">100%</span></label>
+      </div>
+      <div class="row">
+        <label>Output
+          <select data-k="bits">
+            <option value="${srcBits}">Same as source (${srcBits === 32 ? '32-bit float' : srcBits + '-bit'})</option>
+            <option value="16">16-bit</option><option value="24">24-bit</option><option value="32">32-bit float</option>
+          </select>
+        </label>
+        <label class="ms-only"><input type="checkbox" data-k="protect" checked> Prevent clipping in L/R</label>
+      </div>
+      <div class="row">
+        <button class="primary" data-a="play">▶ Preview</button>
+        <label class="ms-only">Listen to
+          <select data-k="listen">
+            <option value="dec">Decoded L/R</option>
+            <option value="m">M only</option>
+            <option value="s">S only (mono)</option>
+          </select>
+        </label>
+      </div>
+      <div class="outs"></div>
+      <div class="note"></div>`;
+    $('h2', card).textContent = name;
+    const modeSel = $('[data-k=mode]', card);
+    modeSel.value = st.mode;
+    if (wav.channels !== 2) { modeSel.disabled = true; }
+    const note = $('.note', card), outs = $('.outs', card), playBtn = $('[data-a=play]', card);
+
+    const getMS = () => {
+      const key = st.mode + (st.invert ? 'i' : '');
+      if (st.cache[key]) return st.cache[key];
+      st.cache = {};
+      let r;
+      if (st.mode === 'ms') r = { M: wav.data[0], S: wav.data[1] };
+      else r = Core.msFromLR(wav.data[0], wav.data[1]);
+      if (st.invert) r = { M: r.M, S: Core.negate(r.S) };
+      return (st.cache[key] = r);
+    };
+
+    function outputs() {
+      if (st.mode === 'split') {
+        const names = wav.channels === 2 ? ['L', 'R'] : wav.data.map((_, i) => 'ch' + (i + 1));
+        return names.map((n, i) => ({
+          file: `${base}_${n}.wav`, label: `${n} (mono)`, hint: `Channel ${i + 1} on its own`,
+          make: () => [wav.data[i]]
+        }));
+      }
+      return [
+        { file: `${base}_M.wav`, label: 'M', hint: 'Mid, mono', make: () => [getMS().M] },
+        { file: `${base}_S_plus.wav`, label: 'S +', hint: 'Side, left lobe (as recorded)', make: () => [getMS().S] },
+        { file: `${base}_S_minus.wav`, label: 'S −', hint: 'Side, right lobe (inverted)', make: () => [Core.negate(getMS().S)] },
+        { file: `${base}_LR.wav`, label: 'Decoded stereo', hint: 'L = M+S, R = M−S', make: () => { const d = decoded(); return [d.L, d.R]; } },
+        { file: `${base}_L.wav`, label: 'L (mono)', hint: 'Decoded left', make: () => [decoded().L] },
+        { file: `${base}_R.wav`, label: 'R (mono)', hint: 'Decoded right', make: () => [decoded().R] }
+      ];
+    }
+
+    function decoded() {
+      const { M, S } = getMS();
+      const d = Core.decode(M, S, st.width);
+      const p = Core.peak(d.L, d.R);
+      if (p > 1 && st.protect) {
+        const g = 0.989 / p;
+        Core.scaleInPlace(d.L, g); Core.scaleInPlace(d.R, g);
+        note.className = 'note';
+        note.textContent = `L/R peaked at ${db(p)} dBFS, so it was turned down by ${db(1 / g).replace('+', '')} dB to avoid clipping.`;
+      } else if (p > 1) {
+        note.className = 'note warn';
+        note.textContent = `Warning: L/R peaks at ${db(p)} dBFS and will clip${st.bits === 32 || (!st.bits && srcBits === 32) ? ' when converted to fixed point' : ''}.`;
+      } else {
+        note.className = 'note';
+        note.textContent = `L/R peak: ${db(p)} dBFS.`;
+      }
+      return d;
+    }
+
+    function renderOuts() {
+      card.querySelectorAll('.ms-only').forEach(el => el.style.display = st.mode === 'split' ? 'none' : '');
+      outs.innerHTML = '';
+      for (const o of outputs()) {
+        const b = document.createElement('button');
+        b.innerHTML = `⬇ <strong></strong><small></small>`;
+        $('strong', b).textContent = o.label;
+        $('small', b).textContent = o.file + ' · ' + o.hint;
+        b.onclick = () => {
+          b.disabled = true;
+          setTimeout(() => {
+            try {
+              const bits = +$('[data-k=bits]', card).value;
+              const ab = Core.encodeWav(o.make(), wav.sampleRate, bits);
+              const url = URL.createObjectURL(new Blob([ab], { type: 'audio/wav' }));
+              const a = document.createElement('a');
+              a.href = url; a.download = o.file; document.body.appendChild(a); a.click(); a.remove();
+              setTimeout(() => URL.revokeObjectURL(url), 10000);
+            } catch (e) {
+              note.className = 'note warn'; note.textContent = 'Export failed: ' + e.message;
+            } finally { b.disabled = false; }
+          }, 20);
+        };
+        outs.appendChild(b);
+      }
+    }
+
+    function refreshPlayer() {
+      if (!player || player.card !== card) return;
+      const listen = $('[data-k=listen]', card).value, w = st.width, t = ctx.currentTime;
+      const set = (g, v) => g.gain.setTargetAtTime(v, t, 0.02);
+      if (player.split) return;
+      if (listen === 'm') { set(player.gM, 1); set(player.gSL, 0); set(player.gSR, 0); }
+      else if (listen === 's') { set(player.gM, 0); set(player.gSL, 1); set(player.gSR, 1); }
+      else { set(player.gM, 1); set(player.gSL, w); set(player.gSR, -w); }
+    }
+
+    playBtn.onclick = () => {
+      if (player && player.card === card) { stopPlayer(); return; }
+      stopPlayer();
+      ctx = ctx || new AudioContext();
+      ctx.resume();
+      const split = st.mode === 'split';
+      const chans = split ? wav.data.slice(0, 2) : [getMS().M, getMS().S];
+      const buf = ctx.createBuffer(chans.length, wav.length, wav.sampleRate);
+      chans.forEach((c, i) => buf.copyToChannel(c, i));
+      const src = ctx.createBufferSource(); src.buffer = buf;
+      const master = ctx.createGain(); master.gain.value = 0.7; master.connect(ctx.destination);
+      player = { card, src, btn: playBtn, split };
+      if (split) {
+        src.connect(master);
+      } else {
+        const sp = ctx.createChannelSplitter(2), mg = ctx.createChannelMerger(2);
+        const gM = ctx.createGain(), gSL = ctx.createGain(), gSR = ctx.createGain();
+        src.connect(sp);
+        sp.connect(gM, 0); gM.connect(mg, 0, 0); gM.connect(mg, 0, 1);
+        sp.connect(gSL, 1); gSL.connect(mg, 0, 0);
+        sp.connect(gSR, 1); gSR.connect(mg, 0, 1);
+        mg.connect(master);
+        Object.assign(player, { gM, gSL, gSR });
+        gM.gain.value = 1; gSL.gain.value = st.width; gSR.gain.value = -st.width;
+        refreshPlayer();
+      }
+      src.onended = () => { if (player && player.src === src) stopPlayer(); };
+      src.start();
+      playBtn.textContent = '■ Stop';
+    };
+
+    card.addEventListener('input', e => {
+      const k = e.target.dataset.k;
+      if (!k) return;
+      if (k === 'mode') { st.mode = e.target.value; if (player && player.card === card) stopPlayer(); renderOuts(); note.textContent = ''; }
+      if (k === 'invert') st.invert = e.target.checked;
+      if (k === 'protect') st.protect = e.target.checked;
+      if (k === 'width') { st.width = e.target.value / 100; $('.width-val', card).textContent = e.target.value + '%'; }
+      refreshPlayer();
+    });
+
+    renderOuts();
+  }
+
+  function stopPlayer() {
+    if (!player) return;
+    try { player.src.stop(); } catch (e) {}
+    player.btn.textContent = '▶ Preview';
+    player = null;
+  }
+
+  const db = v => (v > 0 ? (20 * Math.log10(v)) : -Infinity).toFixed(1).replace(/^(?!-)/, '+');
+  const fmtTime = s => { const m = Math.floor(s / 60), r = Math.round(s % 60); return `${m}:${String(r).padStart(2, '0')}`; };
+})();
+</script>
+</body>
+</html>
