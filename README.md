@@ -6,7 +6,7 @@
 
 <p align="center">
   Split and decode Mid/Side WAV recordings from Zoom handy recorders, right in your browser.<br>
-  <strong><a href="https://__OWNER__.github.io/Zoom-Wav-Converter/">Open the converter →</a></strong>
+  <strong><a href="https://dcuartielles.github.io/Zoom-Wav-Converter/">Open the converter →</a></strong>
 </p>
 
 ---
@@ -17,7 +17,7 @@ Everything runs locally in your web browser. **Your audio is never uploaded anyw
 
 ## How to use it
 
-1. Open **https://__OWNER__.github.io/Zoom-Wav-Converter/** (works in any recent Chrome, Firefox, Safari or Edge).
+1. Open **https://dcuartielles.github.io/Zoom-Wav-Converter/** (works in any recent Chrome, Firefox, Safari or Edge).
 2. Drag your WAV files onto the drop area, or click it to choose files. You can add several at once.
 3. Each file gets its own panel. The mode is picked from the file name:
    - `…MS.WAV` → **MS raw** (channel 1 = Mid, channel 2 = Side)
