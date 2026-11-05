@@ -70,7 +70,7 @@ R = M − width·S          S = (L − R) / 2
 - WAVE_FORMAT_EXTENSIBLE headers, Broadcast WAV (BWF) metadata chunks, RF64
 - Mono, stereo and multichannel files (multichannel files can be split into one file per channel)
 
-Very long recordings (over ~1 GB per file) may exceed the memory a browser tab is allowed to use. Split long takes before converting.
+Files are streamed in small blocks rather than loaded whole, so even very long recordings use little memory. Output files are limited to the 4 GB WAV maximum.
 
 ## Running it yourself
 
