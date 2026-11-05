@@ -25,7 +25,13 @@ a{color:var(--link)}
 .topbar{height:6px;background:var(--mau-red)}
 main{max-width:880px;margin:0 auto;padding:28px 16px 64px}
 header.brand{display:flex;gap:14px;align-items:center;margin-bottom:6px}
+header.brand{flex-wrap:wrap}
 header.brand img{width:48px;height:48px;flex:none}
+nav.top{margin-left:auto;display:flex;gap:16px;font-size:.95rem}
+nav.top a{text-decoration:none;color:var(--muted);padding-bottom:2px;border-bottom:2px solid transparent}
+nav.top a[aria-current]{color:var(--ink);border-bottom-color:var(--mau-red)}
+.learn{display:block;margin-top:24px;padding:14px 16px;border-radius:10px;background:var(--soft);border-left:4px solid var(--mau-red);text-decoration:none;color:var(--ink)}
+.learn b{color:var(--link)}
 h1{font-size:1.7rem;margin:0;letter-spacing:-.01em;line-height:1.2}
 h2{font-size:1.05rem;margin:0 0 4px;word-break:break-all}
 .sub{color:var(--muted);margin:6px 0 24px}
@@ -59,7 +65,7 @@ footer{color:var(--muted);font-size:.85rem;margin-top:28px;border-top:1px solid 
 <body>
 <div class="topbar"></div>
 <main>
-  <header class="brand"><img src="logo.svg" alt=""><h1>Zoom WAV Converter</h1></header>
+  <header class="brand"><img src="logo.svg" alt=""><h1>Zoom WAV Converter</h1><nav class="top" aria-label="Site"><a href="./" aria-current="page">Converter</a><a href="learn.html">How it works</a></nav></header>
   <p class="sub">Split and decode Mid/Side recordings (e.g. Zoom 4-channel mode). Everything runs in your browser — files are never uploaded.</p>
 
   <label class="drop" id="drop">
@@ -70,8 +76,10 @@ footer{color:var(--muted);font-size:.85rem;margin-top:28px;border-top:1px solid 
 
   <div id="list"></div>
 
+  <a class="learn" href="learn.html"><b>New to Mid/Side? How it works →</b><br>An interactive guide: move a sound around the microphone and watch M, S, L and R change. Explains why the S file can't be split in two.</a>
+
   <details>
-    <summary>How Mid/Side works</summary>
+    <summary>Quick reference: formulas and modes</summary>
     <p>The Mid capsule points forward. The Side capsule is a figure-8: its left lobe gives positive polarity, its right lobe negative polarity — but both arrive in <em>one</em> signal. So S cannot be separated into two independent recordings; its "left" and "right" halves are the same signal with opposite polarity:</p>
     <span class="eq">S_left  = +S
 S_right = −S</span>

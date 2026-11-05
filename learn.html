@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How Mid/Side Works</title>
+<meta name="description" content="An interactive explanation of microphone arrays, Mid/Side recording and why channels overlap, for students using the Zoom WAV Converter.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta property="og:title" content="How Mid/Side works · Zoom WAV Converter">
+<meta property="og:description" content="Move a sound source around a Mid/Side microphone and watch M, S, L and R change.">
+<meta property="og:image" content="icon-512.png">
+<meta name="theme-color" content="#E4022D">
+<style>
+:root{
+  --mau-red:#E4022D;--mau-red-dark:#B5001F;--deep-blue:#1E4589;--steel:#B1C1DF;--mint:#E1F1EF;--aqua:#98D1C9;--berry:#A9115F;--mandarin:#EF7748;
+  --bg:#F7F7F8;--card:#FFFFFF;--ink:#1A1A1A;--muted:#5B5F69;--line:#DCDFE5;--soft:var(--mint);--grid:#E3E5EA;
+  --link:var(--deep-blue);
+  --c-m:#4A4E57;--c-s:#E0662F;--c-l:var(--deep-blue);--c-r:var(--mau-red);
+  --coffee:#6F4E37;--milk:#F4EBDD;--mixL:#A88468;--mixR:#3B271B;--capp:#B9926F;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14161C;--card:#1E2129;--ink:#F2F2F4;--muted:#A3A8B4;--line:#343845;--soft:#1B2A2C;--grid:#2C303B;--link:var(--steel);--c-m:#C9CCD4;--c-s:#F28A5C;--c-l:#8FA8DA;--c-r:#FF4D6A;}}
+:root[data-theme=dark]{--bg:#14161C;--card:#1E2129;--ink:#F2F2F4;--muted:#A3A8B4;--line:#343845;--soft:#1B2A2C;--grid:#2C303B;--link:var(--steel);--c-m:#C9CCD4;--c-s:#F28A5C;--c-l:#8FA8DA;--c-r:#FF4D6A;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+a{color:var(--link)}
+.topbar{height:6px;background:var(--mau-red)}
+main{max-width:880px;margin:0 auto;padding:28px 16px 72px}
+header.brand{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+header.brand img{width:44px;height:44px;flex:none}
+header.brand .t{font-size:1.15rem;font-weight:700;color:var(--ink);text-decoration:none}
+nav.top{margin-left:auto;display:flex;gap:16px;font-size:.95rem}
+nav.top a{text-decoration:none;color:var(--muted);padding-bottom:2px;border-bottom:2px solid transparent}
+nav.top a[aria-current]{color:var(--ink);border-bottom-color:var(--mau-red)}
+h1{font-size:2rem;line-height:1.15;margin:36px 0 8px;letter-spacing:-.015em}
+h2{font-size:1.35rem;margin:52px 0 6px;line-height:1.25}
+h2 .n{color:var(--mau-red);font-variant-numeric:tabular-nums;margin-right:8px}
+h3{font-size:1.02rem;margin:22px 0 4px}
+p{margin:10px 0}
+.lede{font-size:1.1rem;color:var(--muted);max-width:62ch}
+.key{background:var(--soft);border-left:4px solid var(--mau-red);border-radius:8px;padding:14px 16px;margin:20px 0}
+.key strong{display:block;margin-bottom:2px}
+.toc{display:flex;flex-wrap:wrap;gap:6px 8px;margin:18px 0 0;padding:0;list-style:none;font-size:.9rem}
+.toc a{display:inline-block;padding:4px 10px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--ink);background:var(--card)}
+.toc a:hover{border-color:var(--mau-red)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:14px}
+.mini{text-align:center}
+.mini svg{width:100%;max-width:170px;height:auto;display:block;margin:0 auto}
+.mini b{display:block;font-size:.95rem;margin-top:4px}
+.mini span{display:block;font-size:.85rem;color:var(--muted);line-height:1.4}
+.eq{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--soft);padding:10px 14px;border-radius:8px;display:block;margin:10px 0;white-space:pre;overflow-x:auto;font-size:.92rem}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em;background:var(--soft);padding:1px 5px;border-radius:4px}
+
+/* cups */
+.cups{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:12px 0}
+.cup{display:flex;flex-direction:column;align-items:center;width:104px;text-align:center}
+.cup svg{width:64px;height:64px}
+.cup b{font-size:.92rem;line-height:1.2}
+.cup span{font-size:.8rem;color:var(--muted);line-height:1.3}
+.op{font-size:1.4rem;font-weight:700;color:var(--muted);padding:0 2px}
+.verdict{font-size:.92rem;padding:6px 10px;border-radius:8px;background:var(--soft)}
+.two{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin-top:14px}
+@media (min-width:760px){.two{grid-template-columns:minmax(0,1fr) minmax(0,1.35fr)}}
+
+/* playground */
+.play{display:grid;grid-template-columns:1fr;gap:18px;margin-top:14px}
+@media (min-width:780px){.play{grid-template-columns:minmax(0,420px) 1fr}}
+#plot{width:100%;height:auto;display:block;touch-action:none;cursor:grab;user-select:none}
+#plot:active{cursor:grabbing}
+.ctrls{display:grid;gap:10px;margin-top:6px}
+.ctrls label{display:grid;grid-template-columns:96px 1fr 74px;align-items:center;gap:8px;font-size:.9rem}
+.ctrls output{font-variant-numeric:tabular-nums;text-align:right;color:var(--muted);font-size:.85rem}
+.checks{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.9rem}
+.checks label{display:inline-flex;gap:6px;align-items:center}
+input[type=range],input[type=checkbox]{accent-color:var(--mau-red)}
+input[type=range]{width:100%}
+button{font:inherit;font-size:.9rem;padding:7px 14px;border-radius:8px;border:1px solid var(--mau-red);background:var(--mau-red);color:#fff;font-weight:600;cursor:pointer}
+button:hover{background:var(--mau-red-dark)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+.meters{display:grid;gap:4px}
+.mrow{display:grid;grid-template-columns:92px 1fr 88px;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--line)}
+.mrow:last-child{border-bottom:0}
+.mrow .lab{font-weight:700;font-size:.95rem;line-height:1.2}
+.mrow .lab small{display:block;font-weight:400;color:var(--muted);font-size:.75rem}
+.mrow svg{width:100%;height:40px;display:block}
+.mrow .val{font-variant-numeric:tabular-nums;text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9rem}
+.mrow .val small{display:block;font-family:system-ui,sans-serif;color:var(--muted);font-size:.72rem}
+.story{background:var(--soft);border-radius:10px;padding:12px 14px;margin-top:12px;font-size:.95rem;min-height:6.5em}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.82rem;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:18px;height:0;border-top:3px solid;vertical-align:middle;margin-right:5px}
+.legend i.d{border-top-style:dashed}
+
+/* table */
+.tablewrap{overflow-x:auto;margin-top:12px}
+table{border-collapse:separate;border-spacing:0;width:100%;min-width:460px;font-size:.92rem}
+th,td{padding:8px 10px;text-align:center;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--muted);font-size:.85rem}
+th[scope=row]{text-align:left;color:var(--ink);font-size:.92rem;white-space:nowrap}
+td{font-family:ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;position:relative}
+td span{position:relative}
+td::before{content:"";position:absolute;inset:3px;border-radius:6px;background:var(--tint,transparent);opacity:var(--a,0)}
+tr.sep th,tr.sep td{border-top:2px solid var(--line)}
+
+/* pipeline */
+.pipe{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin-top:14px;list-style:none;padding:0}
+.pipe li{flex:1 1 130px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;position:relative;font-size:.88rem;line-height:1.4}
+.pipe li b{display:block;font-size:.95rem;margin-bottom:2px}
+.pipe li span{color:var(--muted)}
+.pipe li:not(:last-child)::after{content:"→";position:absolute;right:-12px;top:50%;transform:translateY(-50%);color:var(--mau-red);font-weight:700;z-index:1;background:var(--bg);line-height:1}
+@media (max-width:620px){.pipe{flex-direction:column}.pipe li:not(:last-child)::after{content:"↓";right:auto;left:50%;top:auto;bottom:-15px;transform:translateX(-50%);padding:0 4px}}
+ol.steps{padding-left:22px}
+ol.steps li{margin:6px 0}
+
+/* Q&A */
+.qa{display:grid;gap:10px;margin-top:12px}
+.qa .card{border-left:4px solid var(--mau-red)}
+.qa .q{font-weight:700}
+.qa .q::before{content:"✗ ";color:var(--mau-red)}
+.qa p{margin:6px 0 0}
+details.ex{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
+details.ex summary{cursor:pointer;font-weight:600}
+details.ex p{margin:8px 0 2px}
+footer{color:var(--muted);font-size:.85rem;margin-top:48px;border-top:1px solid var(--line);padding-top:14px}
+svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div class="topbar"></div>
+<main>
+  <header class="brand">
+    <img src="logo.svg" alt="">
+    <a class="t" href="./">Zoom WAV Converter</a>
+    <nav class="top" aria-label="Site">
+      <a href="./">Converter</a>
+      <a href="learn.html" aria-current="page">How it works</a>
+    </nav>
+  </header>
+
+  <h1>How Mid/Side works</h1>
+  <p class="lede">Why you can't split the S file into "left" and "right", and how a single subtraction still gets you left and right.</p>
+
+  <div class="key">
+    <strong>The one idea to take away</strong>
+    A recording channel is not a sound. It is a <em>mix</em> of every sound around the microphone, each one turned up or down depending on where it comes from. Channels always overlap. Stereo is made by <em>combining</em> channels with simple arithmetic, not by finding a channel that only contains the left side.
+  </div>
+
+  <ul class="toc" aria-label="On this page">
+    <li><a href="#hear">1 · Microphones hear everything</a></li>
+    <li><a href="#cappuccino">2 · The cappuccino</a></li>
+    <li><a href="#playground">3 · Playground</a></li>
+    <li><a href="#overlap">4 · How much leaks where</a></li>
+    <li><a href="#polarity">5 · Two S files, one signal</a></li>
+    <li><a href="#pipeline">6 · From file to headphones</a></li>
+    <li><a href="#myths">7 · Common mix-ups</a></li>
+    <li><a href="#try">8 · Try this</a></li>
+  </ul>
+
+  <!-- 1 -->
+  <h2 id="hear"><span class="n">1</span>Every microphone hears everything</h2>
+  <p>A microphone capsule is a sensor that responds to sound from <em>all</em> directions, just more strongly from some than from others. The shape of that sensitivity is its <strong>polar pattern</strong>. The diagrams below show the microphone from above, facing the top of the page. The further the line reaches in a direction, the louder sound from there is recorded.</p>
+  <div class="grid4" id="patterns"></div>
+  <p>A Zoom recorder in 4-channel mode is a small <strong>sensor array</strong>: two capsules for XY and two for Mid/Side, each with its own pattern, all listening to the same room at the same time. Every capsule records the whole scene. They differ only in <em>how much</em> of each direction they let in, and the S capsule also differs in <em>which way up</em> (polarity) the signal comes out.</p>
+
+  <!-- 2 -->
+  <h2 id="cappuccino"><span class="n">2</span>The cappuccino</h2>
+  <p>Think of a recording as a cappuccino. Coffee and milk have been poured together into one cup. In the kitchen, getting the milk back out is practically impossible. With signals it can be just one mathematical operation away, <strong>but only if you have the right cups</strong>.</p>
+
+  <div class="two">
+    <div class="card">
+      <h3 style="margin-top:0">One cup: no way back</h3>
+      <div class="cups" id="cupsOne"></div>
+      <p>The S file is a single cup. Sound from the left and sound from the right were poured into it together by the figure-8 capsule (the right side upside-down). One cup gives you one number at every moment, and you're asking for two unknowns. No formula can split it. That's why "splitting S into two" fails: <strong>S was never two signals</strong>.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Two cups with known recipes: one step back</h3>
+      <div class="cups" id="cupsTwo"></div>
+      <p>Now take <em>two</em> cups mixed in <em>different, known</em> proportions. Add them and the milk cancels: you get coffee. Subtract them and the coffee cancels: you get milk. Two cups, two unknowns, one operation each.</p>
+      <p>With signals, <strong>coffee = M</strong> (what both ears share) and <strong>milk = S</strong> (the left–right difference):</p>
+      <span class="eq">L = M + S          M = (L + R) / 2
+R = M − S          S = (L − R) / 2</span>
+      <p>In a kitchen you can't pour "minus one cup of milk". In a signal you can: flipping the polarity (multiplying every sample by −1) is <em>anti-milk</em>. That's what makes the R cup possible.</p>
+    </div>
+  </div>
+  <p>The recipe is known because the microphone <em>is</em> the recipe: the polar patterns fix exactly how every direction gets mixed into M and S. Separating actual <em>sources</em>, like a guitar from a voice, is a much harder problem, because nobody hands you their recipes (see <a href="#further">going further</a>).</p>
+
+  <!-- 3 -->
+  <h2 id="playground"><span class="n">3</span>Playground: move the sound</h2>
+  <p>Drag the ★ around the microphone, or use the slider. The plot shows the M and S patterns and the two <em>virtual</em> microphones that the arithmetic L = M + S and R = M − S creates. The dots on the ray show how loudly each one picks up the sound. On the right is a sine wave as each channel records it. The height of a wave is its level, and a wave drawn upside-down has inverted polarity.</p>
+
+  <div class="play card">
+    <div>
+      <svg id="plot" viewBox="0 0 400 400" role="img" aria-label="Polar plot of the M, S and virtual L and R microphones with a movable sound source"></svg>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div>
+      <div class="ctrls">
+        <label>Sound from <input type="range" id="ang" min="-180" max="180" step="1" value="-60"><output id="angOut"></output></label>
+        <label>Stereo width <input type="range" id="wid" min="0" max="200" step="5" value="100"><output id="widOut"></output></label>
+      </div>
+      <div class="checks" style="margin-top:8px">
+        <label><input type="checkbox" id="showLR" checked> Virtual L/R mics</label>
+        <label><input type="checkbox" id="showXY"> Compare with XY</label>
+      </div>
+      <div class="meters" id="meters" style="margin-top:10px"></div>
+      <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button id="listen" type="button">▶ Listen (headphones)</button>
+        <span style="font-size:.82rem;color:var(--muted)">Plays noise through the decoded L and R</span>
+      </div>
+    </div>
+    <div class="story" id="story" aria-live="polite" style="grid-column:1/-1"></div>
+  </div>
+  <p id="aimNote"></p>
+
+  <!-- 4 -->
+  <h2 id="overlap"><span class="n">4</span>How much of each sound ends up where</h2>
+  <p>Picture a small band in front of the recorder: a guitar 60° to the left, a voice straight ahead and a drum 60° to the right. The table shows how much of each one is in each channel, with 1.00 meaning the full sound. This is the "overlap" made visible. The table follows the <em>width</em> slider in the playground.</p>
+  <div class="tablewrap card" style="padding:6px 8px"><table id="recipe" aria-describedby="recipeNote"></table></div>
+  <ul id="recipeNote">
+    <li><strong>No row is "pure".</strong> Even the decoded L channel holds the whole voice and some of the drum. L doesn't mean "only left". It means "left is louder here than in R".</li>
+    <li><strong>S has the voice at 0.00.</strong> The front is S's blind spot, so anything in the centre lives only in M.</li>
+    <li><strong>S has the guitar and the drum with opposite signs.</strong> This is the one cup with both inside, which is why S can't be split.</li>
+    <li><strong>XY overlaps too.</strong> The XY left capsule still hears the drum on the right. Real arrays always overlap. Stereo comes from the <em>difference</em> in level between the two channels.</li>
+  </ul>
+
+  <!-- 5 -->
+  <h2 id="polarity"><span class="n">5</span>Two S files, one signal</h2>
+  <p>The converter gives you <code>_S_plus.wav</code> and <code>_S_minus.wav</code>. They are not two halves of S. They are the <em>same</em> signal, one upside-down:</p>
+  <div class="grid4" id="polWaves"></div>
+  <p>A sound from the left reaches the figure-8's <strong>+</strong> lobe, so it comes out of S the same way up as in M. When you add them (L = M + S), the two waves reinforce each other. A sound from the right reaches the <strong>−</strong> lobe and comes out upside-down, so in L it partly cancels M, while in R (= M − S, i.e. M plus the flipped S) it reinforces. Put S+ on the left speaker and S− on the right, add M to both, and you have built the decoder yourself.</p>
+
+  <!-- 6 -->
+  <h2 id="pipeline"><span class="n">6</span>From file to headphones</h2>
+  <ol class="pipe">
+    <li><b>MS.WAV</b><span>From the recorder: channel 1 = M, channel 2 = S</span></li>
+    <li><b>Converter</b><span>This site. Writes M, S+, S−, L, R or decoded stereo</span></li>
+    <li><b>Audacity (optional)</b><span>A graphical tool to look inside: one stereo track, top lane L, bottom lane R</span></li>
+    <li><b>Amplifier</b><span>Sound card or headphone amp</span></li>
+    <li><b>Your ears</b><span>L goes to the left ear, R to the right. Your brain hears the level difference as direction</span></li>
+  </ol>
+  <h3>You don't need Audacity</h3>
+  <p>The converter already does the whole decode. <strong>Decoded stereo</strong> (<code>_LR.wav</code>) is a finished stereo file with L in the left channel and R in the right. You can play it, hear it with the converter's own <strong>▶ Preview</strong>, or drop it straight into any editor or project.</p>
+  <p>We use Audacity in class only as an <em>external graphical tool</em>: a second, independent way to look at the waveforms and to build the decoder by hand, so the maths isn't a black box.</p>
+  <h3>Optional: build the decoder yourself in Audacity</h3>
+  <ol class="steps">
+    <li>Download <strong>M</strong>, <strong>S +</strong> and <strong>S −</strong> and import all three into Audacity as mono tracks.</li>
+    <li>Pan M to the centre, S+ fully left and S− fully right.</li>
+    <li>Play. You're hearing L = M + S and R = M − S, made by the mixer.</li>
+    <li>Turn both S tracks down by the same amount: the image gets narrower. Turn them up: wider. Mute them: mono. That's the width slider.</li>
+    <li>Swap the pans of S+ and S−: left and right swap. That's the "Invert S" checkbox.</li>
+  </ol>
+
+  <!-- 7 -->
+  <h2 id="myths"><span class="n">7</span>Common mix-ups</h2>
+  <div class="qa">
+    <div class="card"><div class="q">"S contains the left and the right sounds, so I can split it into two files."</div><p>S contains both <em>mixed into one signal</em> (left the right way up, right upside-down). One cup, two ingredients: there is no operation that unmixes it on its own. You need M as the second cup.</p></div>
+    <div class="card"><div class="q">"The L channel only contains what was on the left."</div><p>L contains everything, with the left side louder. Look at the table: the voice in the middle is fully in both L and R. That's exactly why it sounds centred.</p></div>
+    <div class="card"><div class="q">"S− is the right-hand half of S."</div><p>S− is the whole of S, flipped upside-down. Its only job is to be <em>subtracted</em> from M for the right channel.</p></div>
+    <div class="card"><div class="q">"More microphones means the sounds come out separated."</div><p>More microphones give you more cups with different recipes, so you can steer <em>virtual microphones</em> towards a direction. Every channel is still a mix. Pulling individual instruments out of a recording ("stem separation") is a different, statistical problem.</p></div>
+    <div class="card"><div class="q">"Inverting the polarity is the same as a time delay."</div><p>No. Inverting multiplies every sample by −1, so every frequency flips at once with no delay. For a single steady sine wave the two can look alike on screen, but on real sound they are different operations.</p></div>
+  </div>
+
+  <!-- 8 -->
+  <h2 id="try"><span class="n">8</span>Try this in the playground</h2>
+  <details class="ex"><summary>Put the sound straight in front. Why are L and R exactly equal?</summary><p>The front is in the gap between the figure-8's lobes, so S = 0. Then L = M + 0 and R = M − 0. Equal levels in both ears = the sound is in the centre.</p></details>
+  <details class="ex"><summary>Move it fully to the left (90°). Why isn't R zero, and why is it negative?</summary><p>M still hears sound from the side at about half level (0.5), and S hears it fully (+1). R = 0.5 − 1 = −0.5: the right channel gets a quieter, upside-down copy. Your brain still places the sound on the left because L (1.5) is three times louder.</p></details>
+  <details class="ex"><summary>Set the width to 0%. What happens to the virtual microphones?</summary><p>With no S, L = R = M. Both virtual mics become the same forward-facing cardioid: mono. Raising the width turns them outward. At 50% they point to about ±45°, at 100% to about ±63°.</p></details>
+  <details class="ex"><summary>Tick "Compare with XY". How similar are the decoded MS and XY channels?</summary><p>Quite similar in the front half, which is why the decoded MS file and the XY file sound alike. MS lets you choose the angle <em>after</em> recording, while XY fixes it when you place the capsules.</p></details>
+  <details class="ex"><summary>Move the sound behind the recorder. Why does it almost disappear?</summary><p>M faces forward and is nearly deaf at the back, and S is in its blind spot there too. Mid/Side is built to capture what's in front.</p></details>
+
+  <h2 id="further" style="font-size:1.1rem">Going further</h2>
+  <p>Combining sensors with fixed weights to "aim" a listening direction is called <strong>beamforming</strong>. Mid/Side is the simplest case, with two sensors and one adjustable weight (the width). Arrays with more capsules (ambisonic microphones, the microphones in a smart speaker) do the same thing with more cups, so they can aim more sharply and in any direction. Getting individual instruments out of a finished mix needs statistics or machine learning, because there the recipes are unknown.</p>
+
+  <footer>Patterns are idealised: M is a perfect cardioid, S a perfect figure-8 with its + lobe on the left, matching the converter's L = M + S. Real capsules and recorder gain settings vary.<br><a href="./">← Back to the converter</a> · <a href="https://github.com/dcuartielles/Zoom-Wav-Converter">Source on GitHub</a></footer>
+</main>
+
+<script>
+(() => {
+  const D = Math.PI / 180;
+  // Patterns. theta in degrees: 0 = front, +90 = left, -90 = right.
+  const M = t => 0.5 * (1 + Math.cos(t * D));          // cardioid facing front
+  const S = t => Math.sin(t * D);                       // figure-8, + lobe to the left
+  const OMNI = () => 1;
+  const XYL = t => 0.5 * (1 + Math.cos((t - 45) * D));  // cardioid at +45 (left)
+  const XYR = t => 0.5 * (1 + Math.cos((t + 45) * D));
+  const peak = w => 0.5 + Math.sqrt(0.25 + w * w);     // max of M + wS
+  const aim = w => Math.atan2(2 * w, 1) / D;            // direction of that max
+
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs = {}, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  const fmt = v => (v < -0.005 ? '−' : v > 0.005 ? '+' : ' ') + Math.abs(v).toFixed(2);
+  const fmtT = v => (v < -0.005 ? '−' : '') + Math.abs(v).toFixed(2);
+
+  // ---------- polar renderer ----------
+  function pt(c, r, t) { return [c - r * Math.sin(t * D), c - r * Math.cos(t * D)]; }
+
+  function lobes(f) {
+    // split the curve into runs of constant sign
+    const runs = []; let cur = null;
+    for (let t = -180; t <= 180; t += 1) {
+      const g = f(t), s = g > 1e-9 ? 1 : g < -1e-9 ? -1 : 0;
+      if (s === 0) { if (cur) { cur.pts.push([t, 0]); runs.push(cur); cur = null; } continue; }
+      if (!cur || cur.sign !== s) { if (cur) runs.push(cur); cur = { sign: s, pts: [] }; }
+      cur.pts.push([t, Math.abs(g)]);
+    }
+    if (cur) runs.push(cur);
+    // merge wrap-around run (-180 and 180 are the same direction)
+    if (runs.length > 1) {
+      const a = runs[0], b = runs[runs.length - 1];
+      if (a.sign === b.sign && a.pts[0][0] === -180 && b.pts[b.pts.length - 1][0] === 180) {
+        b.pts = b.pts.concat(a.pts.slice(1)); runs.shift();
+      }
+    }
+    return runs;
+  }
+
+  function drawPolar(svg, { size = 400, R, scale = 1, patterns, grid = true, labels = true }) {
+    svg.innerHTML = '';
+    const c = size / 2;
+    if (grid) {
+      const g = el('g', { stroke: css('--grid'), fill: 'none', 'stroke-width': size > 250 ? 1 : 1.2 }, svg);
+      [0.5, 1].forEach(k => el('circle', { cx: c, cy: c, r: R * k / scale }, g));
+      if (scale > 1.05) el('circle', { cx: c, cy: c, r: R, 'stroke-dasharray': '2 4' }, g);
+      el('line', { x1: c - R - 8, y1: c, x2: c + R + 8, y2: c }, g);
+      el('line', { x1: c, y1: c - R - 8, x2: c, y2: c + R + 8 }, g);
+    }
+    if (labels) {
+      const fs = size > 250 ? 12 : 13, col = css('--muted');
+      const L = (x, y, txt, anchor) => { const t = el('text', { x, y, 'font-size': fs, fill: col, 'text-anchor': anchor, 'dominant-baseline': 'middle', 'letter-spacing': '.06em' }, svg); t.textContent = txt; };
+      L(c, 12, 'FRONT', 'middle'); L(c, size - 10, 'BACK', 'middle');
+      L(6, c - 12, 'LEFT', 'start'); L(size - 6, c - 12, 'RIGHT', 'end');
+    }
+    for (const p of patterns) {
+      for (const run of lobes(p.f)) {
+        const d = run.pts.map(([t, r], i) => { const [x, y] = pt(c, r * R / scale, t); return (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1); }).join(' ');
+        const neg = run.sign < 0;
+        const full = run.pts.length > 359 && run.pts.every(q => q[1] > 0);
+        el('path', {
+          d: d + (full ? ' Z' : p.fill && !neg ? ` L${c} ${c} Z` : ''),
+          fill: p.fill && !neg ? p.color : 'none', 'fill-opacity': p.fill && !neg ? 0.13 : 0,
+          stroke: p.color, 'stroke-width': p.width || 2.5,
+          'stroke-dasharray': p.dash || (neg ? '6 5' : 'none'), 'stroke-linejoin': 'round', 'stroke-linecap': 'round'
+        }, svg);
+      }
+      if (p.signs) {
+        const fs = size > 250 ? 18 : 22;
+        [[90, '+'], [-90, '−']].forEach(([t, s]) => {
+          const [x, y] = pt(c, Math.abs(p.f(t)) * R / scale * 0.55, t);
+          const tx = el('text', { x, y, 'font-size': fs, 'font-weight': 700, fill: p.color, 'text-anchor': 'middle', 'dominant-baseline': 'central' }, svg);
+          tx.textContent = s;
+        });
+      }
+    }
+    el('circle', { cx: c, cy: c, r: size > 250 ? 5 : 6, fill: css('--ink') }, svg);
+    return { c };
+  }
+
+  // ---------- section 1: pattern gallery ----------
+  const gallery = [
+    { name: 'Omnidirectional', desc: 'Equal from every direction', pats: () => [{ f: OMNI, color: css('--c-m'), fill: true }] },
+    { name: 'Cardioid: the M capsule', desc: 'Loud in front, deaf at the back', pats: () => [{ f: M, color: css('--c-m'), fill: true }] },
+    { name: 'Figure-8: the S capsule', desc: 'Left lobe +, right lobe − (upside-down), deaf in front and behind', pats: () => [{ f: S, color: css('--c-s'), fill: true, signs: true }] },
+    { name: 'XY pair', desc: 'Two cardioids angled left and right. They overlap in the middle', pats: () => [{ f: XYL, color: css('--c-l') }, { f: XYR, color: css('--c-r') }] }
+  ];
+  const gal = document.getElementById('patterns');
+  const galSvgs = gallery.map(g => {
+    const d = document.createElement('div'); d.className = 'mini';
+    const s = el('svg', { viewBox: '0 0 200 200', role: 'img', 'aria-label': g.name + ' polar pattern' }, d);
+    const b = document.createElement('b'); b.textContent = g.name; d.appendChild(b);
+    const sp = document.createElement('span'); sp.textContent = g.desc; d.appendChild(sp);
+    gal.appendChild(d);
+    return [s, g];
+  });
+
+  // ---------- section 2: cups ----------
+  function cup(fill, title, sub, anti) {
+    const w = document.createElement('div'); w.className = 'cup';
+    w.innerHTML = `<svg viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M47 25h4a7 7 0 0 1 0 14h-5" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <path d="M9 18h39v16a19.5 19.5 0 0 1-39 0z" fill="${fill}" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M5 58h47" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      ${anti ? '<text x="28.5" y="36" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">−</text>' : ''}
+    </svg><b></b><span></span>`;
+    w.style.color = 'var(--ink)';
+    w.querySelector('b').textContent = title; w.querySelector('span').textContent = sub;
+    return w;
+  }
+  const op = t => { const s = document.createElement('span'); s.className = 'op'; s.textContent = t; return s; };
+  const one = document.getElementById('cupsOne');
+  one.append(cup('var(--capp)', 'S', 'left sound + (right sound flipped)'), op('→'), (() => { const v = document.createElement('span'); v.className = 'verdict'; v.textContent = '✗ left?  right?'; return v; })());
+  const two = document.getElementById('cupsTwo');
+  two.append(
+    cup('var(--mixL)', 'L', 'coffee + milk'), op('&'), cup('var(--mixR)', 'R', 'coffee − milk', true), op('→'),
+    cup('var(--coffee)', 'M = coffee', '(L + R) ÷ 2'), cup('var(--milk)', 'S = milk', '(L − R) ÷ 2')
+  );
+
+  // ---------- section 3: playground ----------
+  const plot = document.getElementById('plot');
+  const ang = document.getElementById('ang'), wid = document.getElementById('wid');
+  const showLR = document.getElementById('showLR'), showXY = document.getElementById('showXY');
+  const angOut = document.getElementById('angOut'), widOut = document.getElementById('widOut');
+  const story = document.getElementById('story'), aimNote = document.getElementById('aimNote');
+  const meters = document.getElementById('meters');
+
+  const rows = [
+    { key: 'src', lab: 'Sound', sub: 'the source', col: '--muted' },
+    { key: 'm', lab: 'M', sub: 'mid capsule', col: '--c-m' },
+    { key: 's', lab: 'S', sub: 'side capsule', col: '--c-s' },
+    { key: 'l', lab: 'L', sub: 'M + width·S', col: '--c-l' },
+    { key: 'r', lab: 'R', sub: 'M − width·S', col: '--c-r' }
+  ];
+  const mEls = {};
+  for (const r of rows) {
+    const d = document.createElement('div'); d.className = 'mrow';
+    d.innerHTML = `<div class="lab"></div><svg viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true"></svg><div class="val"></div>`;
+    d.querySelector('.lab').innerHTML = `${r.lab}<small>${r.sub}</small>`;
+    meters.appendChild(d);
+    mEls[r.key] = { svg: d.querySelector('svg'), val: d.querySelector('.val'), col: r.col };
+  }
+
+  function wave(svg, amp, color, maxAmp) {
+    svg.innerHTML = '';
+    el('line', { x1: 0, y1: 20, x2: 200, y2: 20, stroke: css('--grid'), 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' }, svg);
+    const a = (amp / maxAmp) * 17;
+    let d = '';
+    for (let x = 0; x <= 200; x += 2) d += (x ? 'L' : 'M') + x + ' ' + (20 - a * Math.sin(x / 200 * 4 * Math.PI)).toFixed(2);
+    el('path', { d, fill: 'none', stroke: color, 'stroke-width': 2.5, 'vector-effect': 'non-scaling-stroke', 'stroke-linejoin': 'round' }, svg);
+  }
+
+  const st = { t: -(+ang.value), w: wid.value / 100 };
+
+  function dirText(t) {
+    const a = Math.round(Math.abs(t));
+    if (a === 0) return 'front';
+    if (a === 180) return 'behind';
+    return `${a}° ${t > 0 ? 'left' : 'right'}`;
+  }
+
+  function render() {
+    const { t, w } = st;
+    angOut.textContent = dirText(t);
+    widOut.textContent = Math.round(w * 100) + '%';
+    const lr = showLR.checked, xy = showXY.checked;
+    const scale = lr ? Math.max(1, peak(w)) : 1;
+    const pats = [
+      { f: M, color: css('--c-m'), fill: true, width: 2 },
+      { f: S, color: css('--c-s'), fill: true, signs: true, width: 2 }
+    ];
+    if (xy) pats.push({ f: XYL, color: css('--c-l'), dash: '1.5 5', width: 2.5 }, { f: XYR, color: css('--c-r'), dash: '1.5 5', width: 2.5 });
+    if (lr) pats.push({ f: x => M(x) + w * S(x), color: css('--c-l'), width: 3 }, { f: x => M(x) - w * S(x), color: css('--c-r'), width: 3 });
+    const R = 150, { c } = drawPolar(plot, { size: 400, R, scale, patterns: pats });
+
+    // source ray, dots, star
+    const [sx, sy] = pt(c, 178, t);
+    el('line', { x1: sx, y1: sy, x2: c, y2: c, stroke: css('--ink'), 'stroke-width': 1.2, 'stroke-dasharray': '3 4', opacity: .6 }, plot);
+    const dots = [[M(t), '--c-m'], [S(t), '--c-s']];
+    if (lr) dots.push([M(t) + w * S(t), '--c-l'], [M(t) - w * S(t), '--c-r']);
+    if (xy) dots.push([XYL(t), '--c-l'], [XYR(t), '--c-r']);
+    for (const [g, col] of dots) {
+      const [x, y] = pt(c, Math.abs(g) * R / scale, t);
+      el('circle', { cx: x, cy: y, r: 5, fill: g < 0 ? css('--card') : css(col), stroke: css(col), 'stroke-width': 2.5 }, plot);
+    }
+    const star = el('text', { x: sx, y: sy, 'font-size': 30, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: css('--mau-red'), style: 'cursor:grab' }, plot);
+    star.textContent = '★';
+    el('circle', { cx: sx, cy: sy, r: 22, fill: 'transparent' }, plot);
+
+    // meters
+    const vm = M(t), vs = S(t), vl = vm + w * vs, vr = vm - w * vs;
+    const maxA = Math.max(1, peak(w));
+    const vals = { src: 1, m: vm, s: vs, l: vl, r: vr };
+    for (const k in vals) {
+      wave(mEls[k].svg, vals[k], css(mEls[k].col), maxA);
+      const v = vals[k];
+      mEls[k].val.innerHTML = k === 'src' ? '1.00<small>reference</small>' :
+        `${fmt(v)}<small>${Math.abs(v) < 0.005 ? 'silent' : v < 0 ? 'upside-down' : 'same way up'}</small>`;
+    }
+
+    // story
+    const a = Math.abs(t), side = t > 0 ? 'left' : 'right', other = t > 0 ? 'right' : 'left';
+    let s;
+    if (a <= 3) s = `<b>The sound comes from the front.</b> That's exactly between the figure-8's two lobes, so S hears nothing (S = ${fmt(vs)}). L = M + 0 and R = M − 0 are identical, so both ears get the same level and you hear the sound in the <b>centre</b>.`;
+    else if (a >= 177) s = `<b>The sound comes from behind.</b> M faces forward and is almost deaf back there (M = ${fmt(vm)}), and S is in its blind spot too. Mid/Side is built to capture what's in front, so this sound nearly disappears.`;
+    else {
+      const big = side === 'left' ? vl : vr, small = side === 'left' ? vr : vl;
+      s = `<b>The sound comes from the ${side}.</b> It reaches the figure-8's <b>${side === 'left' ? '+' : '−'} lobe</b>, so S is ${side === 'left' ? 'the <b>same way up</b> as M' : '<b>upside-down</b> compared with M'} (S = ${fmt(vs)}). `;
+      if (w === 0) s += `But the width is 0%, so S isn't used: L and R are both just M, and the sound is in the middle (mono).`;
+      else {
+        s += `In ${side.toUpperCase()} the two waves add up (${fmtT(big)}), and in ${other.toUpperCase()} they partly cancel (${fmtT(small)})`;
+        s += small < -0.005 ? `, even dipping below zero: a quieter, <b>upside-down copy</b> leaks into ${other.toUpperCase()}. ` : '. ';
+        s += Math.abs(small) < 0.02 ? `${other.toUpperCase()} is practically silent: this is where the virtual ${other.toUpperCase()} microphone is deaf. ` : '';
+        s += `The level difference is what makes you hear it on the <b>${side}</b>.`;
+        if (a > 90) s += ` It's also behind the recorder, so M only hears ${fmtT(vm)} of it.`;
+      }
+    }
+    story.innerHTML = s;
+    const ai = aim(w);
+    aimNote.innerHTML = w === 0
+      ? 'At 0% width both virtual microphones are the forward-facing M: mono.'
+      : `At ${Math.round(w * 100)}% width the virtual microphones point to about <b>±${Math.round(ai)}°</b>. Moving the width slider turns them, after the recording is already made. That's the freedom Mid/Side gives you and XY doesn't.`;
+
+    renderRecipe();
+    updateAudio(vl, vr, maxA);
+  }
+
+  // dragging
+  function setFromPointer(ev) {
+    const p = plot.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY;
+    const q = p.matrixTransform(plot.getScreenCTM().inverse());
+    const dx = q.x - 200, dy = q.y - 200;
+    if (Math.hypot(dx, dy) < 4) return;
+    st.t = Math.round(Math.atan2(-dx, -dy) / D);
+    ang.value = -st.t; render();
+  }
+  plot.addEventListener('pointerdown', e => { plot.setPointerCapture(e.pointerId); setFromPointer(e); });
+  plot.addEventListener('pointermove', e => { if (plot.hasPointerCapture(e.pointerId)) setFromPointer(e); });
+  ang.addEventListener('input', () => { st.t = -(+ang.value); if (st.t === -0) st.t = 0; render(); });
+  wid.addEventListener('input', () => { st.w = wid.value / 100; render(); });
+  showLR.addEventListener('change', render); showXY.addEventListener('change', render);
+
+  // legend
+  document.getElementById('legend').innerHTML = [
+    ['--c-m', 'M (mid)', ''], ['--c-s', 'S (side)', ''], ['--c-l', 'L virtual mic', ''], ['--c-r', 'R virtual mic', ''], ['--muted', 'upside-down part', 'd']
+  ].map(([c, t, d]) => `<span><i class="${d}" style="border-color:var(${c})"></i>${t}</span>`).join('') +
+    '<span>· dotted = XY</span><span>· hollow dot = upside-down</span>';
+
+  // ---------- section 4: recipe table ----------
+  const sources = [['Guitar', 60, '60° left'], ['Voice', 0, 'front'], ['Drum', -60, '60° right']];
+  const recipe = document.getElementById('recipe');
+  function renderRecipe() {
+    const w = st.w;
+    const rws = [
+      ['M', '--c-m', M, ''], ['S', '--c-s', S, ''],
+      ['L = M + S', '--c-l', t => M(t) + w * S(t), 'sep'], ['R = M − S', '--c-r', t => M(t) - w * S(t), ''],
+      ['XY left', '--c-l', XYL, 'sep'], ['XY right', '--c-r', XYR, '']
+    ];
+    let h = '<thead><tr><th scope="col">Channel</th>' + sources.map(s => `<th scope="col">${s[0]}<br><span style="font-weight:400">${s[2]}</span></th>`).join('') + '</tr></thead><tbody>';
+    for (const [name, col, f, cls] of rws) {
+      h += `<tr class="${cls}"><th scope="row" style="color:var(${col})">${name.replace('S', w === 1 || !name.includes('=') ? 'S' : String(+w.toFixed(2)) + '·S')}</th>`;
+      for (const s of sources) {
+        const v = f(s[1]);
+        h += `<td style="--tint:var(${col});--a:${(Math.min(1, Math.abs(v) / 1.2) * 0.28).toFixed(3)}"><span>${fmtT(v)}</span></td>`;
+      }
+      h += '</tr>';
+    }
+    recipe.innerHTML = h + '</tbody>';
+  }
+
+  // ---------- section 5: polarity waves ----------
+  const pw = document.getElementById('polWaves');
+  const polItems = [
+    ['M', '--c-m', 1, 'the same from either side'],
+    ['S, sound from the left', '--c-s', 1, '+ lobe: same way up as M'],
+    ['S, sound from the right', '--c-s', -1, '− lobe: upside-down'],
+    ['S− file', '--c-s', -1, 'the whole S, flipped: −S']
+  ];
+  const polSvgs = polItems.map(([t, c, a, sub]) => {
+    const d = document.createElement('div'); d.className = 'mini';
+    const s = el('svg', { viewBox: '0 0 200 40', preserveAspectRatio: 'none', style: 'height:48px;max-width:none', 'aria-hidden': 'true' }, d);
+    const b = document.createElement('b'); b.textContent = t; d.appendChild(b);
+    const sp = document.createElement('span'); sp.textContent = sub; d.appendChild(sp);
+    pw.appendChild(d); return [s, c, a];
+  });
+
+  // ---------- audio ----------
+  let ctx = null, gL = null, gR = null, playing = false, src = null;
+  const btn = document.getElementById('listen');
+  function updateAudio(l, r, mx) {
+    if (!playing) return;
+    const now = ctx.currentTime;
+    gL.gain.setTargetAtTime(0.35 * l / mx, now, 0.03);
+    gR.gain.setTargetAtTime(0.35 * r / mx, now, 0.03);
+  }
+  btn.addEventListener('click', () => {
+    if (playing) { src.stop(); playing = false; btn.textContent = '▶ Listen (headphones)'; return; }
+    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+    ctx.resume();
+    const len = ctx.sampleRate * 2, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+    // pulsed noise: easier to locate than a steady hiss
+    for (let i = 0; i < len; i++) { const ph = (i / ctx.sampleRate) % 0.5; d[i] = (Math.random() * 2 - 1) * (ph < 0.25 ? Math.sin(ph / 0.25 * Math.PI) : 0); }
+    src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 200;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 5000;
+    gL = ctx.createGain(); gR = ctx.createGain(); gL.gain.value = 0; gR.gain.value = 0;
+    const mg = ctx.createChannelMerger(2);
+    src.connect(hp); hp.connect(lp); lp.connect(gL); lp.connect(gR);
+    gL.connect(mg, 0, 0); gR.connect(mg, 0, 1); mg.connect(ctx.destination);
+    src.start(); playing = true; btn.textContent = '■ Stop';
+    render();
+  });
+
+  // ---------- paint everything (and repaint on theme change) ----------
+  function paintStatic() {
+    for (const [s, g] of galSvgs) drawPolar(s, { size: 200, R: 64, patterns: g.pats() });
+    for (const [s, c, a] of polSvgs) wave(s, a, css(c), 1);
+  }
+  function paintAll() { paintStatic(); render(); }
+  paintAll();
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paintAll);
+
+  // expose the math for tests
+  window.__ms = { M, S, XYL, XYR, peak, aim, st, render };
+})();
+</script>
+</body>
+</html>

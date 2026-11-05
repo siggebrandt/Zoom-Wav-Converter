@@ -6,7 +6,8 @@
 
 <p align="center">
   Split and decode Mid/Side WAV recordings from Zoom handy recorders, right in your browser.<br>
-  <strong><a href="https://dcuartielles.github.io/Zoom-Wav-Converter/">Open the converter →</a></strong>
+  <strong><a href="https://dcuartielles.github.io/Zoom-Wav-Converter/">Open the converter →</a></strong> ·
+  <strong><a href="https://dcuartielles.github.io/Zoom-Wav-Converter/learn.html">How Mid/Side works (interactive) →</a></strong>
 </p>
 
 ---
@@ -44,6 +45,10 @@ Everything runs locally in your web browser. **Your audio is never uploaded anyw
 - **Prevent clipping in L/R** – if M + S would go above 0 dBFS, the decoded stereo is turned down just enough to avoid clipping. The panel tells you by how much.
 
 ## Why can't S be split into two independent signals?
+
+> For a full, interactive explanation (polar patterns, the cappuccino analogy, a playground where you move a sound around the microphone, and exercises) see **[How Mid/Side works](https://dcuartielles.github.io/Zoom-Wav-Converter/learn.html)**.
+
+You don't need Audacity or any other editor: the **Decoded stereo** download is already a finished L/R stereo file. Audacity is only suggested in class as an external graphical tool for looking at the waveforms and building the decoder by hand.
 
 The Side capsule is a **figure-8** microphone. Its left lobe produces positive polarity and its right lobe negative polarity, but both come out as **one** signal. Sounds from the left and from the right are already mixed together in it. The only difference between the "left" and "right" side is polarity:
 
