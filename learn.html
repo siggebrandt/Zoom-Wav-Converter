@@ -60,6 +60,7 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em;background
 .cup span{font-size:.8rem;color:var(--muted);line-height:1.3}
 .op{font-size:1.4rem;font-weight:700;color:var(--muted);padding:0 2px}
 .verdict{font-size:.92rem;padding:6px 10px;border-radius:8px;background:var(--soft)}
+table.cmp td{font-family:inherit;text-align:left}table.cmp th[scope=col]{text-align:left}
 .two{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin-top:14px}
 @media (min-width:760px){.two{grid-template-columns:minmax(0,1fr) minmax(0,1.35fr)}}
 
@@ -165,26 +166,36 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
   <p>A Zoom recorder in 4-channel mode is a small <strong>sensor array</strong>: two capsules for XY and two for Mid/Side, each with its own pattern, all listening to the same room at the same time. Every capsule records the whole scene. They differ only in <em>how much</em> of each direction they let in, and the S capsule also differs in <em>which way up</em> (polarity) the signal comes out.</p>
 
   <!-- 2 -->
-  <h2 id="cappuccino"><span class="n">2</span>The cappuccino</h2>
-  <p>Think of a recording as a cappuccino. Coffee and milk have been poured together into one cup. In the kitchen, getting the milk back out is practically impossible. With signals it can be just one mathematical operation away, <strong>but only if you have the right cups</strong>.</p>
+  <h2 id="cappuccino"><span class="n">2</span>The cappuccino: why this feels impossible</h2>
+  <p>Pour milk into coffee and you get a cappuccino. Try to get the milk back out. You can't. Once they're mixed, they're mixed. We've learned this in kitchens all our lives, so when we hear that the left and right sounds were "mixed" into a recording, our intuition says they're gone for good.</p>
+  <p><strong>That intuition comes from the physical world, and signals don't live there.</strong> A digital audio signal is just a long list of numbers, one per sample. Mixing two signals means <em>adding</em> those numbers, and any addition can be undone with a subtraction. Numbers can also go below zero, which milk can't: "minus one cup of milk" means nothing in a kitchen, but a signal multiplied by −1 (polarity inverted) is perfectly real. Call it <em>anti-milk</em>.</p>
 
-  <div class="two">
-    <div class="card">
-      <h3 style="margin-top:0">One cup: no way back</h3>
-      <div class="cups" id="cupsOne"></div>
-      <p>The S file is a single cup. Sound from the left and sound from the right were poured into it together by the figure-8 capsule (the right side upside-down). One cup gives you one number at every moment, and you're asking for two unknowns. No formula can split it. That's why "splitting S into two" fails: <strong>S was never two signals</strong>.</p>
-    </div>
-    <div class="card">
-      <h3 style="margin-top:0">Two cups with known recipes: one step back</h3>
-      <div class="cups" id="cupsTwo"></div>
-      <p>Now take <em>two</em> cups mixed in <em>different, known</em> proportions. Add them and the milk cancels: you get coffee. Subtract them and the coffee cancels: you get milk. Two cups, two unknowns, one operation each.</p>
-      <p>With signals, <strong>coffee = M</strong> (what both ears share) and <strong>milk = S</strong> (the left–right difference):</p>
-      <span class="eq">L = M + S          M = (L + R) / 2
-R = M − S          S = (L − R) / 2</span>
-      <p>In a kitchen you can't pour "minus one cup of milk". In a signal you can: flipping the polarity (multiplying every sample by −1) is <em>anti-milk</em>. That's what makes the R cup possible.</p>
-    </div>
+  <div class="tablewrap card" style="padding:6px 8px">
+    <table class="cmp">
+      <thead><tr><th scope="col"></th><th scope="col">In the kitchen</th><th scope="col">In signals</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Mixing is…</th><td>pouring: molecules intermingle</td><td>adding numbers, sample by sample</td></tr>
+        <tr><th scope="row">Negative amounts</th><td>impossible</td><td>normal: flip the polarity (× −1)</td></tr>
+        <tr><th scope="row">Undoing a mix</th><td>practically impossible</td><td>one subtraction, and it's exact</td></tr>
+      </tbody>
+    </table>
   </div>
-  <p>The recipe is known because the microphone <em>is</em> the recipe: the polar patterns fix exactly how every direction gets mixed into M and S. Separating actual <em>sources</em>, like a guitar from a voice, is a much harder problem, because nobody hands you their recipes (see <a href="#further">going further</a>).</p>
+
+  <div class="card" style="margin-top:14px">
+    <h3 style="margin-top:0">The signal version of a cappuccino</h3>
+    <div class="cups" id="cupsTwo"></div>
+    <p>With signals, <strong>coffee = M</strong> (what both ears share) and <strong>milk = S</strong> (the left–right difference). Making stereo is mixing. Getting M and S back is unmixing. Both are one operation:</p>
+    <span class="eq">mix:    L = M + S          unmix:  M = (L + R) / 2
+        R = M − S                  S = (L − R) / 2</span>
+    <p>Try it with one sample. Say coffee M = 0.3 and milk S = 0.1. Mixing gives L = 0.4 and R = 0.2. Unmixing gives (0.4 + 0.2) / 2 = <strong>0.3</strong> and (0.4 − 0.2) / 2 = <strong>0.1</strong>: the exact coffee and milk you started with, with nothing lost. Do that for every sample, 48,000 times a second, and you've decoded a recording.</p>
+  </div>
+
+  <div class="key" style="margin-top:14px">
+    <strong>The one rule the kitchen still teaches us</strong>
+    <div class="cups" id="cupsOne" style="margin:6px 0"></div>
+    To undo a mix you need as many <em>different</em> mixes as there are ingredients. M and S are two different cups, so L and R can be computed. The S file on its own is a single cup with "left" and "right" already inside it, so no subtraction can split it. That's why S can't be separated into two: <b>S was never two signals</b>.
+  </div>
+  <p>We can always compute the mix because the microphone <em>is</em> the recipe: the polar patterns fix exactly how every direction is added into M and S. Separating actual <em>sources</em>, like a guitar from a voice, is harder, because there nobody hands you the recipe (see <a href="#further">going further</a>).</p>
 
   <!-- 3 -->
   <h2 id="playground"><span class="n">3</span>Playground: move the sound</h2>
@@ -422,7 +433,7 @@ R = M − S</span>
   }
   const op = t => { const s = document.createElement('span'); s.className = 'op'; s.textContent = t; return s; };
   const one = document.getElementById('cupsOne');
-  one.append(cup('var(--capp)', 'S', 'left sound + (right sound flipped)'), op('→'), (() => { const v = document.createElement('span'); v.className = 'verdict'; v.textContent = '✗ left?  right?'; return v; })());
+  one.append(cup('var(--capp)', 'S alone', 'left + (right flipped)'), op('→'), (() => { const v = document.createElement('span'); v.className = 'verdict'; v.textContent = '✗ left? right? one cup, two unknowns'; return v; })());
   const two = document.getElementById('cupsTwo');
   two.append(
     cup('var(--mixL)', 'L', 'coffee + milk'), op('&'), cup('var(--mixR)', 'R', 'coffee − milk', true), op('→'),
