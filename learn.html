@@ -152,9 +152,10 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
     <li><a href="#playground">3 · Playground</a></li>
     <li><a href="#overlap">4 · How much leaks where</a></li>
     <li><a href="#polarity">5 · Two S files, one signal</a></li>
-    <li><a href="#pipeline">6 · From file to headphones</a></li>
-    <li><a href="#myths">7 · Common mix-ups</a></li>
-    <li><a href="#try">8 · Try this</a></li>
+    <li><a href="#xy">6 · Where XY fits in</a></li>
+    <li><a href="#pipeline">7 · From file to headphones</a></li>
+    <li><a href="#myths">8 · Common mix-ups</a></li>
+    <li><a href="#try">9 · Try this</a></li>
   </ul>
 
   <!-- 1 -->
@@ -231,7 +232,33 @@ R = M − S          S = (L − R) / 2</span>
   <p>A sound from the left reaches the figure-8's <strong>+</strong> lobe, so it comes out of S the same way up as in M. When you add them (L = M + S), the two waves reinforce each other. A sound from the right reaches the <strong>−</strong> lobe and comes out upside-down, so in L it partly cancels M, while in R (= M − S, i.e. M plus the flipped S) it reinforces. Put S+ on the left speaker and S− on the right, add M to both, and you have built the decoder yourself.</p>
 
   <!-- 6 -->
-  <h2 id="pipeline"><span class="n">6</span>From file to headphones</h2>
+  <h2 id="xy"><span class="n">6</span>Where XY fits in (it doesn't enter the equation)</h2>
+  <p>In 4-channel mode the recorder runs <strong>two separate arrays at once</strong> and saves them as two separate files. They are two independent ways of recording the same scene, not four ingredients of one recipe.</p>
+  <div class="two">
+    <div class="card">
+      <h3 style="margin-top:0">XY.WAV: already stereo</h3>
+      <span class="eq">channel 1 = L  (aims left)
+channel 2 = R  (aims right)</span>
+      <p>The two XY capsules are physically pointed left and right, so each one <em>is</em> a left or right microphone. There's nothing to decode. In the converter, "Split channels" just hands you L and R as they were recorded.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">MS.WAV: stereo after one step</h3>
+      <span class="eq">channel 1 = M,  channel 2 = S
+L = M + S
+R = M − S</span>
+      <p>Here no capsule points left or right, so L and R have to be <em>built</em>. Every term in the equation is M or S. XY isn't there.</p>
+    </div>
+  </div>
+  <h3>Why XY can't be used in the MS equation</h3>
+  <ul>
+    <li><strong>The equation is already complete.</strong> Two unknowns (L and R), two cups with known recipes (M and S). In cappuccino terms: you already have both cups you need to get the coffee and the milk back. A third and fourth cup can't make the answer "more correct".</li>
+    <li><strong>XY cups come from a different kitchen.</strong> XY's recipes are cardioids at ±45°, not M's and S's. Mixing them into L = M + S changes the recipe into something that is neither MS nor XY, and the virtual microphones stop pointing where you think.</li>
+    <li><strong>The capsules sit in different places.</strong> The XY pair is a few centimetres away from the MS pair, so sound reaches them a tiny bit earlier or later. Adding signals with different arrival times cancels some frequencies and boosts others (comb filtering), and it sounds hollow and "phasey". M and S work together only because they are mounted at the same point.</li>
+  </ul>
+  <p>So you end up with <strong>two stereo versions</strong> of the same take: XY (fixed angle, ready to use) and decoded MS (adjustable width, centre-safe in mono). Tick <em>Compare with XY</em> in the <a href="#playground">playground</a> to see how similar they are. You pick one, or blend the two finished stereo files later in a DAW as a creative choice, by ear. Check the image isn't mirrored: on some models the two arrays face different directions.</p>
+
+  <!-- 7 -->
+  <h2 id="pipeline"><span class="n">7</span>From file to headphones</h2>
   <ol class="pipe">
     <li><b>MS.WAV</b><span>From the recorder: channel 1 = M, channel 2 = S</span></li>
     <li><b>Converter</b><span>This site. Writes M, S+, S−, L, R or decoded stereo</span></li>
@@ -252,17 +279,18 @@ R = M − S          S = (L − R) / 2</span>
   </ol>
 
   <!-- 7 -->
-  <h2 id="myths"><span class="n">7</span>Common mix-ups</h2>
+  <h2 id="myths"><span class="n">8</span>Common mix-ups</h2>
   <div class="qa">
     <div class="card"><div class="q">"S contains the left and the right sounds, so I can split it into two files."</div><p>S contains both <em>mixed into one signal</em> (left the right way up, right upside-down). One cup, two ingredients: there is no operation that unmixes it on its own. You need M as the second cup.</p></div>
     <div class="card"><div class="q">"The L channel only contains what was on the left."</div><p>L contains everything, with the left side louder. Look at the table: the voice in the middle is fully in both L and R. That's exactly why it sounds centred.</p></div>
+    <div class="card"><div class="q">"I need the XY file to decode the MS file" (or "L + R uses all four channels").</div><p>Decoding MS uses only M and S. The XY file is a second, independent stereo recording that is already L and R. Adding its channels to the MS equation doesn't help and can make the sound phasey, because the capsules are in different places. See <a href="#xy">where XY fits in</a>.</p></div>
     <div class="card"><div class="q">"S− is the right-hand half of S."</div><p>S− is the whole of S, flipped upside-down. Its only job is to be <em>subtracted</em> from M for the right channel.</p></div>
     <div class="card"><div class="q">"More microphones means the sounds come out separated."</div><p>More microphones give you more cups with different recipes, so you can steer <em>virtual microphones</em> towards a direction. Every channel is still a mix. Pulling individual instruments out of a recording ("stem separation") is a different, statistical problem.</p></div>
     <div class="card"><div class="q">"Inverting the polarity is the same as a time delay."</div><p>No. Inverting multiplies every sample by −1, so every frequency flips at once with no delay. For a single steady sine wave the two can look alike on screen, but on real sound they are different operations.</p></div>
   </div>
 
   <!-- 8 -->
-  <h2 id="try"><span class="n">8</span>Try this in the playground</h2>
+  <h2 id="try"><span class="n">9</span>Try this in the playground</h2>
   <details class="ex"><summary>Put the sound straight in front. Why are L and R exactly equal?</summary><p>The front is in the gap between the figure-8's lobes, so S = 0. Then L = M + 0 and R = M − 0. Equal levels in both ears = the sound is in the centre.</p></details>
   <details class="ex"><summary>Move it fully to the left (90°). Why isn't R zero, and why is it negative?</summary><p>M still hears sound from the side at about half level (0.5), and S hears it fully (+1). R = 0.5 − 1 = −0.5: the right channel gets a quieter, upside-down copy. Your brain still places the sound on the left because L (1.5) is three times louder.</p></details>
   <details class="ex"><summary>Set the width to 0%. What happens to the virtual microphones?</summary><p>With no S, L = R = M. Both virtual mics become the same forward-facing cardioid: mono. Raising the width turns them outward. At 50% they point to about ±45°, at 100% to about ±63°.</p></details>
